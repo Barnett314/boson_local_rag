@@ -219,7 +219,7 @@ def search(
 
     # ── full 模式 ──────────────────────────────
     if mode == "full":
-        SCORE_THRESHOLD = 0.82  # 分數夠高 → 直接回傳，不呼叫 LLM
+        SCORE_THRESHOLD = 0.6  # 分數夠高 → 直接回傳，不呼叫 LLM
         
         if best_score >= SCORE_THRESHOLD:
             print(f"✅ 相似度 {best_score:.2f} ≥ {SCORE_THRESHOLD}，直接回傳（省 Token）\n")
