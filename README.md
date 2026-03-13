@@ -1,5 +1,5 @@
 # 🤖 Boson RAG System
-IT 主管 Boson 的個人專屬知識檢索系統。
+Boson 的個人專屬知識檢索系統。
 
 ## 🔍 指令速查
 - `br find "關鍵字"` : 語意搜尋。
