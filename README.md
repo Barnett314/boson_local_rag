@@ -8,12 +8,6 @@ git clone https://github.com/Barnett314/boson_local_rag.git
 cd boson_local_rag
 bash install.sh
 ```
-
-或一行安裝：
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/Barnett314/boson_local_rag/main/install.sh -o install.sh && bash install.sh
-```
 ## 🔍 指令速查
 - `br find "關鍵字"` : 語意搜尋。
 - `br ask "問題"` : AI 根據筆記回答。
