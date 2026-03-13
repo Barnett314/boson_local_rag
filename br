@@ -1,0 +1,103 @@
+#!/bin/bash
+# Boson RAG System 指令集 (v3.1 - 系統服務整合版)
+
+BR_SCRIPT_PATH="$(readlink -f "$0")"
+PROJECT_DIR="$(dirname "$BR_SCRIPT_PATH")"
+BR_PORT="8900"
+BR_URL="http://127.0.0.1:${BR_PORT}"
+
+GREEN='\033[0;32m'
+RED='\033[0;31m'
+CYAN='\033[0;36m'
+NC='\033[0m'
+
+QUERY="${@:2}"
+
+show_help() {
+    echo -e "${CYAN}🤖 Boson RAG System 指令指南${NC}"
+    echo "========================================="
+    echo -e "  ${GREEN}br find <文字>${NC}   - 語意搜尋 (不需加引號)"
+    echo -e "  ${GREEN}br ask <問題>${NC}    - AI 根據筆記回答"
+    echo -e "  ${GREEN}br match <文字>${NC}  - 精確字串搜尋 (傳統 grep)"
+    echo -e "  ${GREEN}br index${NC}         - 手動建立/更新筆記索引"
+    echo -e "  ${GREEN}br clean${NC}         - 手動清除搜尋快取"
+    echo -e "  ${GREEN}br status${NC}        - 檢查背景服務健康狀態"
+    echo -e "  ${GREEN}br service start${NC} - 啟動常駐服務 (載入模型至記憶體)"
+    echo -e "  ${GREEN}br service stop${NC}  - 停止常駐服務 (完全釋放記憶體)"
+    echo -e "  ${GREEN}br help${NC}          - 顯示本說明選單"
+    echo "========================================="
+}
+
+case "$1" in
+    status)
+        RESP=$(curl -s --connect-timeout 2 "${BR_URL}/health" 2>/dev/null)
+        [ $? -eq 0 ] && echo -e "${GREEN}✅ Boson RAG 運行中${NC}\n$RESP" || echo -e "${RED}❌ 服務未運行 (記憶體已釋放)${NC}"
+        exit 0 ;;
+    service)
+        OS="$(uname -s)"
+        if [ "$2" == "start" ]; then
+            if [ "$OS" == "Linux" ]; then
+                sudo systemctl start boson-rag.service
+                echo -e "${CYAN}🚀 系統服務已啟動，模型載入記憶體中${NC}"
+            elif [ "$OS" == "Darwin" ]; then
+                launchctl load -w "$HOME/Library/LaunchAgents/com.boson.rag.plist"
+                echo -e "${CYAN}🚀 系統服務已啟動，模型載入記憶體中${NC}"
+            fi
+        elif [ "$2" == "stop" ]; then
+            if [ "$OS" == "Linux" ]; then
+                sudo systemctl stop boson-rag.service
+                echo -e "${CYAN}🛑 系統服務已停止，記憶體已完全釋放${NC}"
+            elif [ "$OS" == "Darwin" ]; then
+                launchctl unload -w "$HOME/Library/LaunchAgents/com.boson.rag.plist"
+                echo -e "${CYAN}🛑 系統服務已停止，記憶體已完全釋放${NC}"
+            fi
+        else
+            echo -e "${RED}⚠️ 用法: br service start | stop${NC}"
+        fi
+        exit 0 ;;
+    clean)
+        curl -s "${BR_URL}/cache/clear" && echo -e "${GREEN}🧹 快取已清除${NC}"
+        exit 0 ;;
+    index)
+        echo -e "${CYAN}🧠 開始建立/更新知識庫索引...${NC}"
+        cd "$PROJECT_DIR"
+        source .venv/bin/activate
+        python build_index.py
+        curl -s "${BR_URL}/cache/clear" > /dev/null
+        echo -e "${GREEN}✅ 索引更新完成！${NC}"
+        exit 0 ;;
+    help)
+        show_help
+        exit 0 ;;
+    find|ask|match)
+        if [ -z "$QUERY" ]; then
+            echo -e "${RED}⚠️ 請輸入要搜尋的內容！${NC}"
+            show_help
+            exit 1
+        fi
+        MODE_ARG="$1"
+        [ "$MODE_ARG" == "find" ] && MODE="search"
+        [ "$MODE_ARG" == "ask" ] && MODE="full"
+        [ "$MODE_ARG" == "match" ] && MODE="grep" ;;
+    *)
+        show_help
+        exit 0 ;;
+esac
+
+ENCODED_Q=$(python3 -c "import urllib.parse; print(urllib.parse.quote('''$QUERY'''))")
+curl -s "${BR_URL}/search?q=${ENCODED_Q}&mode=${MODE}&top_k=5" | python3 -c "
+import sys, json
+try:
+    data = json.load(sys.stdin)
+    if data.get('success'):
+        print(f'【Boson RAG】 {data.get(\"mode\")} 模式')
+        print('─' * 40)
+        if data.get('raw_output'):
+            print(data['raw_output'].strip())
+        else:
+            print('⚠️ 找不到相關內容。請確認筆記資料夾中是否包含此關鍵字，或執行 br index 重新建置索引。')
+    else:
+        print(f'❌ 搜尋錯誤: {data.get(\"error\", \"未知錯誤\")}')
+except Exception as e:
+    print('❌ 無法解析伺服器回應，請確認服務是否已啟動 (可輸入 br service start)。')
+" 2>/dev/null

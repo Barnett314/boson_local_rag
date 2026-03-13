@@ -1,0 +1,34 @@
+# ==========================================
+# Boson RAG System - .gitignore
+# ==========================================
+
+# 1. 虛擬環境與 Python 系統快取 (極肥大，不進版控)
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+*$py.class
+
+# 2. 機密金鑰與設定 (🚨 絕對不能上傳，防駭客爬蟲掃描)
+.env
+.env.*
+
+# 3. 龐大的向量資料庫與個人筆記快取 (防隱私外洩與撐爆 Git)
+chroma_db/
+.hash_cache.json
+query_cache.json
+
+# 4. 運行日誌檔案
+logs/
+*.log
+
+# 5. 安裝腳本動態生成的系統服務檔 (因機器環境而異，不需要版控)
+boson-rag.service
+com.boson.rag.plist
+
+# 6. 作業系統與開發編輯器暫存檔
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

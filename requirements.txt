@@ -1,0 +1,11 @@
+sentence-transformers
+chromadb
+langchain-text-splitters
+python-frontmatter
+python-dotenv
+typer
+rich
+langchain-openai
+langchain-core
+requests
+langchain-community
