@@ -9,3 +9,4 @@ langchain-openai
 langchain-core
 requests
 langchain-community
+rank-bm25

@@ -18,6 +18,7 @@ __pycache__/
 chroma_db/
 .hash_cache.json
 query_cache.json
+.conversation_history.json
 
 # 4. 運行日誌檔案
 logs/

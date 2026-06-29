@@ -26,11 +26,20 @@ DEEPSEEK_BASE_URL = "https://api.deepseek.com"
 # === 參數設定 ===
 MAX_TOKENS = 2000
 TEMPERATURE = 0.3
-CHUNK_SIZE = 1200
-CHUNK_OVERLAP = 150
+CHUNK_SIZE = 500
+CHUNK_OVERLAP = 80
 TOP_K = 5
+TOP_K_RETRIEVE = 20
 MAX_RETRIES = 3
 RETRY_DELAY = 2
+
+# === Hybrid 搜尋 ===
+RERANK_MODEL = "BAAI/bge-reranker-v2-m3"
+
+# === 對話歷史 ===
+HISTORY_FILE = str(BASE_DIR / ".conversation_history.json")
+HISTORY_MAX = 30
+HISTORY_CONTEXT = 3
 
 # === 伺服器設定 ===
 DEFAULT_HOST = "127.0.0.1"

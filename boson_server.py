@@ -130,7 +130,21 @@ class BosonHandler(BaseHTTPRequestHandler):
         elif parsed.path == "/cache/clear":
             if state.query_module:
                 state.query_module._CACHE_FILE.unlink(missing_ok=True)
+                state.query_module._reset_bm25()
                 self._send_json({"success": True, "message": "Boson 快取已清除"})
+        elif parsed.path == "/history":
+            if state.query_module:
+                history = state.query_module._load_history()
+                self._send_json({"success": True, "history": history[-20:]})
+            else:
+                self._send_json({"success": False, "error": "服務未就緒"}, 503)
+        elif parsed.path == "/history/clear":
+            import pathlib as _pl
+            from config import HISTORY_FILE as _HF
+            _pl.Path(_HF).unlink(missing_ok=True)
+            if state.query_module:
+                state.query_module._reset_bm25()
+            self._send_json({"success": True, "message": "對話歷史已清除"})
 
 def run_server(host, port):
     with open(PID_FILE, "w") as f:
