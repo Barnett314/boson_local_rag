@@ -10,3 +10,4 @@ langchain-core
 requests
 langchain-community
 rank-bm25
+mcp[cli]
