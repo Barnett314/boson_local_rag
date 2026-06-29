@@ -24,7 +24,9 @@ show_help() {
     echo -e "  ${GREEN}br status${NC}        - 檢查背景服務健康狀態"
     echo -e "  ${GREEN}br service start${NC} - 啟動常駐服務 (載入模型至記憶體)"
     echo -e "  ${GREEN}br service stop${NC}  - 停止常駐服務 (完全釋放記憶體)"
-    echo -e "  ${GREEN}br help${NC}          - 顯示本說明選單"
+    echo -e "  ${GREEN}br history${NC}        - 查看近期 ask 對話記錄"
+    echo -e "  ${GREEN}br history clear${NC}  - 清除對話歷史"
+    echo -e "  ${GREEN}br help${NC}           - 顯示本說明選單"
     echo "========================================="
 }
 
@@ -65,6 +67,28 @@ case "$1" in
         python build_index.py
         curl -s "${BR_URL}/cache/clear" > /dev/null
         echo -e "${GREEN}✅ 索引更新完成！${NC}"
+        exit 0 ;;
+    history)
+        if [ "$2" == "clear" ]; then
+            curl -s "${BR_URL}/history/clear" && echo -e "${GREEN}🗑️  對話歷史已清除${NC}"
+        else
+            curl -s "${BR_URL}/history" | python3 -c "
+import sys, json
+try:
+    data = json.load(sys.stdin)
+    if data.get('success'):
+        h = data.get('history', [])
+        if not h:
+            print('（尚無對話記錄）')
+        else:
+            for item in h:
+                print(f\"[{item['ts']}] {item['query']}\")
+    else:
+        print('⚠️ 無法取得歷史記錄')
+except Exception:
+    print('❌ 服務未啟動，請先執行 br service start')
+" 2>/dev/null
+        fi
         exit 0 ;;
     help)
         show_help

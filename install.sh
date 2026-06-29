@@ -121,6 +121,8 @@ langchain-openai
 langchain-core
 requests
 langchain-community
+rank-bm25
+mcp[cli]
 REQEOF
 
 pip install --upgrade pip --quiet
@@ -354,6 +356,49 @@ echo -e "   4. ${CYAN}br find <關鍵字>${NC}"
 echo -e "   5. ${CYAN}br ask <問題>${NC}"
 echo ""
 echo -e "📖 完整說明：${CYAN}br help${NC}"
+echo ""
+
+# ==========================================
+# 9. Claude Code MCP 整合（可選）
+# ==========================================
+echo -e "${CYAN}【可選】Claude Code MCP 整合${NC}"
+read -rp "❓ 要設定 MCP Server 讓 Claude Code 直接查詢筆記嗎？[y/N]: " setup_mcp
+if [[ "$setup_mcp" =~ ^[Yy]$ ]]; then
+    SETTINGS_DIR="$HOME/.claude"
+    SETTINGS_FILE="$SETTINGS_DIR/settings.json"
+    mkdir -p "$SETTINGS_DIR"
+
+    MCP_ENTRY=$(cat <<EOF
+{
+  "boson-rag": {
+    "command": "$VENV_PYTHON",
+    "args": ["$INSTALL_DIR/boson_mcp.py"],
+    "env": {}
+  }
+}
+EOF
+)
+
+    if [ -f "$SETTINGS_FILE" ]; then
+        # 若 settings.json 已存在，提示手動合併
+        warn "~/.claude/settings.json 已存在，請手動將以下內容加入 mcpServers 區塊："
+        echo ""
+        echo "$MCP_ENTRY"
+        echo ""
+    else
+        # 建立全新的 settings.json
+        cat <<EOF > "$SETTINGS_FILE"
+{
+  "mcpServers": $MCP_ENTRY
+}
+EOF
+        success "MCP 設定已寫入 ~/.claude/settings.json"
+    fi
+
+    echo -e "   重啟 Claude Code 後，可直接呼叫工具："
+    echo -e "   ${CYAN}boson_find / boson_ask / boson_match / boson_status / boson_history${NC}"
+fi
+
 echo "========================================="
 read -rp "✅ 安裝完成，按 Enter 關閉..."
 exit 0
